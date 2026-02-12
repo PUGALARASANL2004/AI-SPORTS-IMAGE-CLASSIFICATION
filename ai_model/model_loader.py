@@ -1,9 +1,6 @@
 import os
 import numpy as np
 from PIL import Image
-import tensorflow as tf
-from tensorflow.keras.applications import EfficientNetB0
-from tensorflow.keras.preprocessing import image as keras_image
 
 
 class ModelLoader:
@@ -26,6 +23,9 @@ class ModelLoader:
         """Load the pre-trained model if not already loaded."""
         if self._model is not None:
             return
+
+        import tensorflow as tf
+        from tensorflow.keras.applications import EfficientNetB0
 
         try:
             # Try to load custom trained model if available

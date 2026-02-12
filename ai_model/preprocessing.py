@@ -1,8 +1,3 @@
-import numpy as np
-from PIL import Image
-from tensorflow.keras.preprocessing import image as keras_image
-from tensorflow.keras.applications.efficientnet import preprocess_input
-
 
 def preprocess_image(image_path, target_size=(224, 224)):
     """
@@ -16,6 +11,11 @@ def preprocess_image(image_path, target_size=(224, 224)):
         Preprocessed image array
     """
     try:
+        import numpy as np
+        from PIL import Image
+        from tensorflow.keras.preprocessing import image as keras_image
+        from tensorflow.keras.applications.efficientnet import preprocess_input
+
         # Load and resize image
         img = Image.open(image_path)
         
