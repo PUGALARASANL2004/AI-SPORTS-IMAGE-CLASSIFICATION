@@ -1,0 +1,52 @@
+{% extends 'classifier/base.html' %}
+{% load static %}
+
+{% block title %}Prediction Result{% endblock %}
+
+{% block content %}
+<div class="result-container">
+    <div class="result-card">
+        <div class="result-header">
+            <h2>🎯 Prediction Result</h2>
+        </div>
+
+        <div class="image-container">
+            <img src="{{ image.image.url }}" alt="Uploaded Image" class="result-image">
+        </div>
+
+        <div class="prediction-info">
+            <div class="sport-label">
+                <span class="label-text">Detected Sport:</span>
+                <h1 class="sport-name">{{ predicted_class|title }}</h1>
+            </div>
+
+            <div class="confidence-section">
+                <div class="confidence-header">
+                    <span>Confidence</span>
+                    <span class="confidence-value">{{ confidence_percentage }}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ confidence_percentage }}%"></div>
+                </div>
+            </div>
+
+            <div class="prediction-details">
+                <div class="detail-item">
+                    <span class="detail-label">Image ID:</span>
+                    <span class="detail-value">{{ image.id }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Uploaded:</span>
+                    <span class="detail-value">{{ image.uploaded_at|date:"M d, Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <a href="{% url 'upload' %}" class="btn-primary">
+                ⬆️ Upload Another Image
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'classifier/base.html' %}
+{% load static %}
+
+{% block title %}Upload Sports Image{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <div class="upload-card">
+        <div class="upload-header">
+            <h2>Upload Sports Image</h2>
+            <p>Upload an image of a sports activity and let AI identify the sport</p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="uploadForm">
+            {% csrf_token %}
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📸</div>
+                <h3>Drag & Drop Image Here</h3>
+                <p>or click to browse</p>
+                <p class="file-info">Supported: JPG, PNG (Max 10MB)</p>
+                {{ form.image }}
+            </div>
+
+            <div id="previewContainer" class="preview-container" style="display: none;">
+                <img id="imagePreview" src="" alt="Preview">
+                <button type="button" class="btn-remove" onclick="removeImage()">✕ Remove</button>
+            </div>
+
+            <button type="submit" class="btn-primary" id="submitBtn" disabled>
+                <span id="btnText">Classify Image</span>
+                <span id="btnLoader" class="loader" style="display: none;"></span>
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'classifier/script.js' %}"></script>
+{% endblock %}
