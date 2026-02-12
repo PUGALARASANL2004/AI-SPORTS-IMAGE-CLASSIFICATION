@@ -19,12 +19,14 @@ class ModelLoader:
         return cls._instance
     
     def __init__(self):
-        if self._model is None:
-            self.load_model()
-            self.load_class_labels()
+        # Do not load model in init to save memory during startup
+        pass
     
     def load_model(self):
-        """Load the pre-trained model."""
+        """Load the pre-trained model if not already loaded."""
+        if self._model is not None:
+            return
+
         try:
             # Try to load custom trained model if available
             model_path = os.path.join('models', 'sports_classifier.h5')
@@ -43,7 +45,10 @@ class ModelLoader:
             raise
     
     def load_class_labels(self):
-        """Load class labels for the 100 sports categories."""
+        """Load class labels if not already loaded."""
+        if self._class_labels is not None:
+            return
+
         labels_path = os.path.join('models', 'class_labels.txt')
         
         if os.path.exists(labels_path):
@@ -56,6 +61,7 @@ class ModelLoader:
     
     def generate_demo_sports_labels(self):
         """Generate sample sports labels for demo purposes."""
+        # ... (same as before) ...
         sports = [
             'air hockey', 'ampute football', 'archery', 'arm wrestling', 'axe throwing',
             'balance beam', 'barell racing', 'baseball', 'basketball', 'baton twirling',
@@ -81,11 +87,15 @@ class ModelLoader:
         return sports[:100]  # Ensure we have exactly 100 labels
     
     def get_model(self):
-        """Get the loaded model."""
+        """Get the loaded model, loading it if necessary."""
+        if self._model is None:
+            self.load_model()
         return self._model
     
     def get_class_labels(self):
-        """Get class labels."""
+        """Get class labels, loading them if necessary."""
+        if self._class_labels is None:
+            self.load_class_labels()
         return self._class_labels
 
 

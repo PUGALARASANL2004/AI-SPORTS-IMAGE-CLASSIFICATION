@@ -7,8 +7,16 @@ class SportsPredictor:
     """Class to handle sports image classification predictions."""
     
     def __init__(self):
-        self.model = model_loader.get_model()
-        self.class_labels = model_loader.get_class_labels()
+        # Do not load model here. Access it via model_loader when needed.
+        pass
+    
+    @property
+    def model(self):
+        return model_loader.get_model()
+        
+    @property
+    def class_labels(self):
+        return model_loader.get_class_labels()
     
     def predict(self, image_path, top_k=1):
         """
