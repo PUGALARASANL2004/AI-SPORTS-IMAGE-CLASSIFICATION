@@ -1,3 +1,6 @@
+# Core Build Tools
+setuptools>=70.0.0
+
 # Core Framework
 django>=4.2.0,<5.0.0
 gunicorn
