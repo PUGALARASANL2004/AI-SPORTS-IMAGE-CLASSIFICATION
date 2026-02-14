@@ -13,8 +13,6 @@ def preprocess_image(image_path, target_size=(224, 224)):
     try:
         import numpy as np
         from PIL import Image
-        from tensorflow.keras.preprocessing import image as keras_image
-        from tensorflow.keras.applications.efficientnet import preprocess_input
 
         # Load and resize image
         img = Image.open(image_path)
@@ -26,14 +24,14 @@ def preprocess_image(image_path, target_size=(224, 224)):
         # Resize image
         img = img.resize(target_size, Image.LANCZOS)
         
-        # Convert to array
-        img_array = keras_image.img_to_array(img)
+        # Convert to array (Equivalent to keras_image.img_to_array)
+        img_array = np.array(img, dtype=np.float32)
         
         # Expand dimensions for batch processing
         img_array = np.expand_dims(img_array, axis=0)
         
-        # Apply model-specific preprocessing
-        img_array = preprocess_input(img_array)
+        # NOTE: EfficientNet in tf.keras has a Rescaling layer built-in,
+        # so preprocess_input is an identity function. We can skip the TF import.
         
         return img_array
     
