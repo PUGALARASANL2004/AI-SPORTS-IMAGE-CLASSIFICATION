@@ -3,7 +3,7 @@ services:
     name: sports-image-classifier
     env: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn sports_classifier.wsgi:application --bind 0.0.0.0:$PORT"
+    startCommand: "gunicorn sports_classifier.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 1 --timeout 120"
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.18
@@ -11,3 +11,7 @@ services:
         generateValue: true
       - key: WEB_CONCURRENCY
         value: 1
+      - key: MALLOC_ARENA_MAX
+        value: 2
+      - key: TF_CPP_MIN_LOG_LEVEL
+        value: 3

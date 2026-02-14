@@ -1,4 +1,9 @@
 import os
+
+# Set memory options before importing tensorflow
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+
 import numpy as np
 from PIL import Image
 
@@ -28,6 +33,10 @@ class ModelLoader:
         from tensorflow.keras.applications import EfficientNetB0
 
         try:
+            # Set threading to match our limited environment
+            tf.config.threading.set_inter_op_parallelism_threads(1)
+            tf.config.threading.set_intra_op_parallelism_threads(1)
+            
             # Try to load custom trained model if available
             model_path = os.path.join('models', 'sports_classifier.h5')
             
@@ -37,6 +46,7 @@ class ModelLoader:
             else:
                 # Fall back to pre-trained EfficientNetB0 with ImageNet weights
                 print("Loading EfficientNetB0 with ImageNet weights (demo mode)")
+                # Force smaller model loading if possible
                 self._model = EfficientNetB0(weights='imagenet', include_top=True)
             
             print("Model loaded successfully!")
