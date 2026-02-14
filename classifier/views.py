@@ -23,6 +23,10 @@ def upload_image(request):
                 # Get the image file path
                 image_path = uploaded_image.image.path
                 
+                # Manual garbage collection to free up RAM for TF
+                import gc
+                gc.collect()
+                
                 # Make prediction
                 predicted_class, confidence_score = predictor.predict_top(image_path)
                 
