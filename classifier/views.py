@@ -95,5 +95,11 @@ def dashboard(request):
 
 
 def home(request):
-    """Home page view."""
+    """Home page view (redirects to upload)."""
     return redirect('upload')
+
+
+def health_check(request):
+    """Simple health check endpoint for Render."""
+    from django.http import HttpResponse
+    return HttpResponse("OK", status=200)

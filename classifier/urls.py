@@ -6,4 +6,5 @@ urlpatterns = [
     path('upload/', views.upload_image, name='upload'),
     path('result/<uuid:pk>/', views.result_view, name='result'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('health/', views.health_check, name='health'),
 ]
