@@ -21,14 +21,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-c250r1jn=q*8!k8#999w$wzeobs^lgq-gejqqz(-70@s9hn-9k'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-c250r1jn=q*8!k8#999w$wzeobs^lgq-gejqqz(-70@s9hn-9k')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = 'RENDER' not in os.environ
+DEBUG = 'RENDER' in os.environ and os.environ.get('DEBUG', 'False') == 'True' if 'RENDER' in os.environ else True
+# On Render, we want DEBUG to be False by default
+if 'RENDER' in os.environ:
+    DEBUG = False
 
 ALLOWED_HOSTS = ['*']
+# Add your Render domain here for better security
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com']
+CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com', 'https://ai-sports-image-classification.onrender.com']
 
 
 # Application definition

@@ -11,6 +11,9 @@ pip install --upgrade "setuptools>=70.0.0" "wheel>=0.40.0"
 # Install dependencies
 pip install -r requirements.txt
 
+# Create media directory for uploads
+mkdir -p media
+
 # Convert static files
 python manage.py collectstatic --no-input
 
