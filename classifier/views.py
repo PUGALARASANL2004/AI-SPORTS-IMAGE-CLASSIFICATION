@@ -39,8 +39,13 @@ def upload_image(request):
             
             except Exception as e:
                 import traceback
-                traceback.print_exc()
-                messages.error(request, f'Error processing image: {str(e)}')
+                error_traceback = traceback.format_exc()
+                print(f"CRITICAL ERROR DURING PREDICTION: {str(e)}")
+                print(error_traceback)
+                messages.error(request, f'Internal processing error: {str(e)}')
+                # If we are in DEBUG mode, re-raise to see the Django error page
+                if settings.DEBUG:
+                    raise e
                 return redirect('upload')
     else:
         form = ImageUploadForm()
