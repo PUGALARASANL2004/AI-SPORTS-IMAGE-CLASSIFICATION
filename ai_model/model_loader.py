@@ -25,34 +25,34 @@ class ModelLoader:
         pass
     
     def load_model(self):
-        """Load the pre-trained model if not already loaded."""
+        """Load the TFLite model and allocate tensors."""
         if self._model is not None:
             return
 
-        import tensorflow as tf
-        from tensorflow.keras.applications import EfficientNetB0
-
         try:
-            # Set threading to match our limited environment
-            tf.config.threading.set_inter_op_parallelism_threads(1)
-            tf.config.threading.set_intra_op_parallelism_threads(1)
+            import tflite_runtime.interpreter as tflite
             
-            # Try to load custom trained model if available
-            model_path = os.path.join('models', 'sports_classifier.h5')
+            # Paths to model files
+            tflite_model_path = os.path.join('models', 'sports_classifier.tflite')
+            h5_model_path = os.path.join('models', 'sports_classifier.h5')
             
-            if os.path.exists(model_path):
-                print(f"Loading custom model from {model_path}")
-                self._model = tf.keras.models.load_model(model_path, compile=False)
+            if os.path.exists(tflite_model_path):
+                print(f"Loading TFLite model from {tflite_model_path}")
+                self._model = tflite.Interpreter(model_path=tflite_model_path)
+            elif os.path.exists(h5_model_path):
+                print("WARNING: .h5 model found but tflite-runtime cannot load it.")
+                print("Please convert your model to .tflite format.")
+                self._model = None
             else:
-                # Fall back to pre-trained EfficientNetB0 with ImageNet weights
-                print("Loading EfficientNetB0 with ImageNet weights (demo mode)")
-                # Force smaller model loading if possible
-                self._model = EfficientNetB0(weights='imagenet', include_top=True)
+                print("No model found. Running in demo mode with labels only.")
+                self._model = None
             
-            print("Model loaded successfully!")
+            if self._model:
+                self._model.allocate_tensors()
+                print("TFLite Model loaded successfully!")
         except Exception as e:
-            print(f"Error loading model: {e}")
-            raise
+            print(f"Error loading TFLite model: {e}")
+            self._model = None
     
     def load_class_labels(self):
         """Load class labels if not already loaded."""

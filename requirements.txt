@@ -6,8 +6,8 @@ django>=4.2.0,<5.0.0
 gunicorn
 whitenoise
 
-# AI & Image Processing
-tensorflow-cpu<2.16
+# AI & Image Processing (Lightweight for Render Free Tier)
+tflite-runtime
 numpy
 pillow
 opencv-python-headless

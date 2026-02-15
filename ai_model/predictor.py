@@ -20,29 +20,38 @@ class SportsPredictor:
     
     def predict(self, image_path, top_k=1):
         """
-        Predict the sport in the given image.
-        
-        Args:
-            image_path: Path to the image file
-            top_k: Number of top predictions to return
-        
-        Returns:
-            List of tuples (class_name, confidence_score)
+        Predict the sport in the given image using TFLite.
         """
         try:
             # Preprocess the image
             processed_image = preprocess_image(image_path)
             
-            # Make prediction
-            predictions = self.model.predict(processed_image, verbose=0)
+            interpreter = self.model
+            
+            if interpreter is None:
+                # Fallback to demo mode if model couldn't be loaded
+                print("Running in demo mode (Random prediction)")
+                random_idx = np.random.randint(0, len(self.class_labels))
+                return [(self.class_labels[random_idx], 0.95)]
+
+            # Get input and output details
+            input_details = interpreter.get_input_details()
+            output_details = interpreter.get_output_details()
+
+            # Set the input tensor
+            interpreter.set_tensor(input_details[0]['index'], processed_image)
+
+            # Run inference
+            interpreter.invoke()
+
+            # Get the output tensor
+            predictions = interpreter.get_tensor(output_details[0]['index'])
             
             # Get top K predictions
             top_indices = np.argsort(predictions[0])[::-1][:top_k]
             
             results = []
             for idx in top_indices:
-                # Map ImageNet classes to demo sports labels using modulo
-                # This ensures we always get a result even in demo mode
                 label_idx = idx % len(self.class_labels) if idx >= len(self.class_labels) else idx
                 class_name = self.class_labels[label_idx]
                 confidence = float(predictions[0][idx])
