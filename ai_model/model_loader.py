@@ -25,33 +25,51 @@ class ModelLoader:
         pass
     
     def load_model(self):
-        """Load the TFLite model and allocate tensors."""
+        """Load the model (TFLite or H5) based on available libraries."""
         if self._model is not None:
             return
 
+        tflite_model_path = os.path.join('models', 'sports_classifier.tflite')
+        h5_model_path = os.path.join('models', 'sports_classifier.h5')
+
+        # Try TFLite first (Highly optimized for memory)
         try:
-            import tflite_runtime.interpreter as tflite
+            interpreter = None
             
-            # Paths to model files
-            tflite_model_path = os.path.join('models', 'sports_classifier.tflite')
-            h5_model_path = os.path.join('models', 'sports_classifier.h5')
-            
-            if os.path.exists(tflite_model_path):
-                print(f"Loading TFLite model from {tflite_model_path}")
-                self._model = tflite.Interpreter(model_path=tflite_model_path)
-            elif os.path.exists(h5_model_path):
-                print("WARNING: .h5 model found but tflite-runtime cannot load it.")
-                print("Please convert your model to .tflite format.")
-                self._model = None
+            # 1. Try tflite_runtime (Production/Render)
+            try:
+                import tflite_runtime.interpreter as tflite
+                if os.path.exists(tflite_model_path):
+                    print(f"Loading TFLite model from {tflite_model_path} via tflite_runtime")
+                    interpreter = tflite.Interpreter(model_path=tflite_model_path)
+            except ImportError:
+                print("tflite_runtime not found, trying full tensorflow")
+
+            # 2. Try full tensorflow (Local Development)
+            if interpreter is None:
+                try:
+                    import tensorflow as tf
+                    if os.path.exists(tflite_model_path):
+                        print(f"Loading TFLite model from {tflite_model_path} via tensorflow.lite")
+                        interpreter = tf.lite.Interpreter(model_path=tflite_model_path)
+                    elif os.path.exists(h5_model_path):
+                        print(f"Loading H5 model from {h5_model_path}")
+                        self._model = tf.keras.models.load_model(h5_model_path, compile=False)
+                        print("H5 Model loaded successfully!")
+                        return
+                except ImportError:
+                    print("tensorflow not found")
+
+            if interpreter:
+                interpreter.allocate_tensors()
+                self._model = interpreter
+                print("TFLite Interpreter initialized successfully!")
             else:
-                print("No model found. Running in demo mode with labels only.")
+                print("❌ CRITICAL: No model found or libraries missing.")
                 self._model = None
-            
-            if self._model:
-                self._model.allocate_tensors()
-                print("TFLite Model loaded successfully!")
+                
         except Exception as e:
-            print(f"Error loading TFLite model: {e}")
+            print(f"Error initializing model: {e}")
             self._model = None
     
     def load_class_labels(self):

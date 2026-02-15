@@ -29,23 +29,19 @@ class SportsPredictor:
             interpreter = self.model
             
             if interpreter is None:
-                # Fallback to demo mode if model couldn't be loaded
-                print("Running in demo mode (Random prediction)")
-                random_idx = np.random.randint(0, len(self.class_labels))
-                return [(self.class_labels[random_idx], 0.95)]
+                raise RuntimeError("AI Model could not be loaded. Please check model files and dependencies.")
 
-            # Get input and output details
-            input_details = interpreter.get_input_details()
-            output_details = interpreter.get_output_details()
-
-            # Set the input tensor
-            interpreter.set_tensor(input_details[0]['index'], processed_image)
-
-            # Run inference
-            interpreter.invoke()
-
-            # Get the output tensor
-            predictions = interpreter.get_tensor(output_details[0]['index'])
+            # Check if it is a TFLite interpreter or a full Keras model
+            if hasattr(interpreter, 'get_input_details'):
+                # TFLite Inference
+                input_details = interpreter.get_input_details()
+                output_details = interpreter.get_output_details()
+                interpreter.set_tensor(input_details[0]['index'], processed_image)
+                interpreter.invoke()
+                predictions = interpreter.get_tensor(output_details[0]['index'])
+            else:
+                # Full Keras Model Inference
+                predictions = interpreter.predict(processed_image, verbose=0)
             
             # Get top K predictions
             top_indices = np.argsort(predictions[0])[::-1][:top_k]
