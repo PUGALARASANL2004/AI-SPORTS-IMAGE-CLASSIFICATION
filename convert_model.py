@@ -3,7 +3,7 @@ import os
 
 def convert_h5_to_tflite(h5_path, tflite_path):
     print(f"Loading .h5 model from {h5_path}...")
-    model = tf.keras.models.load_model(h5_path)
+    model = tf.keras.models.load_model(h5_path, compile=False)
     
     print("Converting to TFLite format...")
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
