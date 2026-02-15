@@ -25,16 +25,27 @@ class ModelLoader:
         pass
     
     def load_model(self):
-        """Load the model (TFLite or H5) based on available libraries."""
+        """Load the model (TFLite or H5) with extremely detailed logging."""
         if self._model is not None:
             return
 
-        # Use absolute paths to avoid issues on Render
         from django.conf import settings
-        tflite_model_path = os.path.join(settings.BASE_DIR, 'models', 'sports_classifier.tflite')
-        h5_model_path = os.path.join(settings.BASE_DIR, 'models', 'sports_classifier.h5')
+        import pathlib
+        
+        # Use absolute paths using Pathlib for better cross-platform support
+        base_path = pathlib.Path(settings.BASE_DIR)
+        models_dir = base_path / 'models'
+        tflite_model_path = models_dir / 'sports_classifier.tflite'
+        h5_model_path = models_dir / 'sports_classifier.h5'
 
-        print(f"Checking for model at: {tflite_model_path}")
+        print(f"--- AI Model Loading Debug ---")
+        print(f"BASE_DIR: {settings.BASE_DIR}")
+        print(f"Models Directory: {models_dir}")
+        
+        if models_dir.exists():
+            print(f"Files in models dir: {[f.name for f in models_dir.iterdir()]}")
+        else:
+            print(f"❌ ERROR: Models directory DOES NOT EXIST at {models_dir}")
 
         # Try TFLite first (Highly optimized for memory)
         try:
@@ -43,57 +54,74 @@ class ModelLoader:
             # 1. Try tflite_runtime (Production/Render)
             try:
                 import tflite_runtime.interpreter as tflite
-                if os.path.exists(tflite_model_path):
-                    print(f"Loading TFLite model via tflite_runtime from {tflite_model_path}")
-                    interpreter = tflite.Interpreter(model_path=tflite_model_path)
+                print("tflite_runtime successfully imported.")
+                
+                if tflite_model_path.exists():
+                    print(f"Loading TFLite model from {tflite_model_path}")
+                    interpreter = tflite.Interpreter(model_path=str(tflite_model_path))
                 else:
                     print(f"TFLite file NOT found at {tflite_model_path}")
             except ImportError as e:
-                print(f"tflite_runtime import failed: {e}. Trying full tensorflow fallback...")
+                print(f"tflite_runtime not installed/found: {e}")
 
             # 2. Try full tensorflow (Local Development)
             if interpreter is None:
                 try:
                     import tensorflow as tf
-                    if os.path.exists(tflite_model_path):
-                        print(f"Loading TFLite model via tensorflow.lite from {tflite_model_path}")
-                        interpreter = tf.lite.Interpreter(model_path=tflite_model_path)
-                    elif os.path.exists(h5_model_path):
+                    print("tensorflow successfully imported.")
+                    
+                    if tflite_model_path.exists():
+                        print(f"Loading TFLite model via tensorflow from {tflite_model_path}")
+                        interpreter = tf.lite.Interpreter(model_path=str(tflite_model_path))
+                    elif h5_model_path.exists():
                         print(f"Loading H5 model from {h5_model_path}")
-                        self._model = tf.keras.models.load_model(h5_model_path, compile=False)
+                        self._model = tf.keras.models.load_model(str(h5_model_path), compile=False)
                         print("H5 Model loaded successfully!")
                         return
                     else:
-                        print(f"No model files found in {os.path.join(settings.BASE_DIR, 'models')}")
+                        print("No model files (.tflite or .h5) found in models directory.")
                 except ImportError:
-                    print("tensorflow not found in this environment")
+                    print("tensorflow not installed/found.")
 
             if interpreter:
                 interpreter.allocate_tensors()
                 self._model = interpreter
-                print("TFLite Interpreter initialized successfully!")
+                print("✅ AI Model (TFLite) initialized successfully!")
             else:
-                print("❌ CRITICAL: No model found or libraries missing. Application will fail to predict.")
+                print("❌ CRITICAL: Failed to initialize any AI model.")
                 self._model = None
+                
+        except Exception as e:
+            print(f"❌ CRITICAL ERROR during load_model: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            self._model = None
                 
         except Exception as e:
             print(f"Error initializing model: {e}")
             self._model = None
     
     def load_class_labels(self):
-        """Load class labels if not already loaded."""
-        if self._class_labels is not None:
+        """Load class labels from the text file with error handling."""
+        if self._labels is not None:
             return
 
-        labels_path = os.path.join('models', 'class_labels.txt')
+        from django.conf import settings
+        import pathlib
         
-        if os.path.exists(labels_path):
-            with open(labels_path, 'r') as f:
-                self._class_labels = [line.strip() for line in f.readlines()]
-        else:
-            # Demo labels for ImageNet (will be replaced with actual sports labels)
-            print("Warning: class_labels.txt not found. Using demo mode.")
-            self._class_labels = self.generate_demo_sports_labels()
+        labels_path = pathlib.Path(settings.BASE_DIR) / 'models' / 'class_labels.txt'
+        
+        try:
+            if labels_path.exists():
+                with open(labels_path, 'r') as f:
+                    self._labels = [line.strip() for line in f.readlines() if line.strip()]
+                print(f"Successfully loaded {len(self._labels)} class labels.")
+            else:
+                print(f"❌ ERROR: Class labels file NOT found at {labels_path}")
+                self._labels = [] 
+        except Exception as e:
+            print(f"❌ ERROR loading class labels: {e}")
+            self._labels = []
     
     def generate_demo_sports_labels(self):
         """Generate sample sports labels for demo purposes."""
