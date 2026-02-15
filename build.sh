@@ -20,5 +20,8 @@ mkdir -p staticfiles
 # Convert static files
 python manage.py collectstatic --no-input
 
+# List collected files to verify
+ls -R staticfiles
+
 # Apply migrations
 python manage.py migrate
