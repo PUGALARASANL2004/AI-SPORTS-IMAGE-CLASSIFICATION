@@ -32,7 +32,11 @@ RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com', 'https://ai-sports-image-classification.onrender.com']
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.onrender.com',
+    'https://ai-sports-image-classification-1.onrender.com',
+    'https://ai-sports-image-classification.onrender.com'
+]
 
 
 # Application definition
@@ -128,8 +132,9 @@ USE_TZ = True
 STATIC_URL = 'static/'
 # This production code might break development if you don't run collectstatic
 if not DEBUG:
-    STATIC_ROOT = BASE_DIR / 'staticfiles'
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    # Use CompressedStaticFilesStorage instead of Manifest version to be more lenient
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Media files (uploaded images)
 MEDIA_URL = '/media/'

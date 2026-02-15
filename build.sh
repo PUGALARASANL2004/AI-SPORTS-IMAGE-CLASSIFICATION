@@ -14,6 +14,9 @@ pip install -r requirements.txt
 # Create media directory for uploads
 mkdir -p media
 
+# Create static directory
+mkdir -p staticfiles
+
 # Convert static files
 python manage.py collectstatic --no-input
 
