@@ -96,14 +96,10 @@ class ModelLoader:
             import traceback
             traceback.print_exc()
             self._model = None
-                
-        except Exception as e:
-            print(f"Error initializing model: {e}")
-            self._model = None
     
     def load_class_labels(self):
         """Load class labels from the text file with error handling."""
-        if self._labels is not None:
+        if self._class_labels is not None:
             return
 
         from django.conf import settings
@@ -114,14 +110,14 @@ class ModelLoader:
         try:
             if labels_path.exists():
                 with open(labels_path, 'r') as f:
-                    self._labels = [line.strip() for line in f.readlines() if line.strip()]
-                print(f"Successfully loaded {len(self._labels)} class labels.")
+                    self._class_labels = [line.strip() for line in f.readlines() if line.strip()]
+                print(f"Successfully loaded {len(self._class_labels)} class labels.")
             else:
                 print(f"❌ ERROR: Class labels file NOT found at {labels_path}")
-                self._labels = [] 
+                self._class_labels = [] 
         except Exception as e:
             print(f"❌ ERROR loading class labels: {e}")
-            self._labels = []
+            self._class_labels = []
     
     def generate_demo_sports_labels(self):
         """Generate sample sports labels for demo purposes."""
