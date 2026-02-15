@@ -11,7 +11,7 @@
         </div>
 
         <div class="image-container">
-            <img src="{{ image.image.url }}" alt="Uploaded Image" class="result-image">
+            <img src="{{ base64_image }}" alt="Uploaded Image" class="result-image">
         </div>
 
         <div class="prediction-info">
@@ -32,12 +32,8 @@
 
             <div class="prediction-details">
                 <div class="detail-item">
-                    <span class="detail-label">Image ID:</span>
-                    <span class="detail-value">{{ image.id }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Uploaded:</span>
-                    <span class="detail-value">{{ image.uploaded_at|date:"M d, Y H:i" }}</span>
+                    <span class="detail-label">Status:</span>
+                    <span class="detail-value">Processed In-Memory (No data stored)</span>
                 </div>
             </div>
         </div>

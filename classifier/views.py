@@ -9,45 +9,49 @@ import os
 from django.conf import settings
 
 
+import base64
+from io import BytesIO
+
 def upload_image(request):
-    """View for handling image uploads, predictions, and Grad-CAM."""
+    """View for handling image uploads and predictions in-memory."""
     
     if request.method == 'POST':
         form = ImageUploadForm(request.POST, request.FILES)
         
         if form.is_valid():
             try:
-                # Save the uploaded image
-                uploaded_image = form.save()
+                # Get the uploaded file from memory
+                image_file = request.FILES['image']
                 
-                # Get the image file path
-                image_path = uploaded_image.image.path
-                
-                # Manual garbage collection to free up RAM for TF
+                # Manual garbage collection to free up RAM
                 import gc
                 gc.collect()
                 
-                # Make prediction
-                predicted_class, confidence_score = predictor.predict_top(image_path)
+                # Make prediction directly using the file-like object
+                # PIL.Image.open (used in our preprocessing) handles this perfectly
+                predicted_class, confidence_score = predictor.predict_top(image_file)
                 
-                # Update the model with prediction results
-                uploaded_image.predicted_class = predicted_class
-                uploaded_image.confidence_score = confidence_score
+                # Convert image to Base64 so we can display it without saving to disk
+                image_file.seek(0)
+                image_bytes = image_file.read()
+                base64_image = base64.b64encode(image_bytes).decode('utf-8')
+                mime_type = image_file.content_type
                 
-                uploaded_image.save()
+                context = {
+                    'predicted_class': predicted_class,
+                    'confidence': confidence_score,
+                    'confidence_percentage': round(confidence_score * 100, 2),
+                    'base64_image': f"data:{mime_type};base64,{base64_image}",
+                }
                 
-                # Redirect to result page
-                return redirect('result', pk=uploaded_image.pk)
+                # Render result directly (No redirect/DB save)
+                return render(request, 'classifier/result.html', context)
             
             except Exception as e:
                 import traceback
-                error_traceback = traceback.format_exc()
-                print(f"CRITICAL ERROR DURING PREDICTION: {str(e)}")
-                print(error_traceback)
-                messages.error(request, f'Internal processing error: {str(e)}')
-                # If we are in DEBUG mode, re-raise to see the Django error page
-                if settings.DEBUG:
-                    raise e
+                print(f"CRITICAL ERROR: {str(e)}")
+                print(traceback.format_exc())
+                messages.error(request, f'Processing error: {str(e)}')
                 return redirect('upload')
     else:
         form = ImageUploadForm()
@@ -55,19 +59,7 @@ def upload_image(request):
     return render(request, 'classifier/upload.html', {'form': form})
 
 
-def result_view(request, pk):
-    """View for displaying prediction results."""
-    
-    uploaded_image = get_object_or_404(UploadedImage, pk=pk)
-    
-    context = {
-        'image': uploaded_image,
-        'predicted_class': uploaded_image.predicted_class,
-        'confidence': uploaded_image.confidence_score,
-        'confidence_percentage': round(uploaded_image.confidence_score * 100, 2) if uploaded_image.confidence_score else 0
-    }
-    
-    return render(request, 'classifier/result.html', context)
+# Removed result_view because results are now rendered directly to prevent storage issues.
 
 
 def dashboard(request):
