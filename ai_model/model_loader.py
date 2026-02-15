@@ -25,12 +25,13 @@ class ModelLoader:
         pass
     
     def load_model(self):
-        """Load the model (TFLite or H5) with robust error handling and fallbacks."""
+        """Load the model (TFLite or H5) with comprehensive error logging."""
         if self._model is not None:
             return
 
         from django.conf import settings
         import pathlib
+        import traceback
         
         # Use absolute paths using Pathlib for better cross-platform support
         base_path = pathlib.Path(settings.BASE_DIR)
@@ -38,41 +39,79 @@ class ModelLoader:
         tflite_model_path = models_dir / 'sports_classifier.tflite'
         h5_model_path = models_dir / 'sports_classifier.h5'
 
-        print(f"--- AI Model Loading Debug ---")
+        print("=" * 70)
+        print("AI MODEL LOADING - DETAILED DEBUG")
+        print("=" * 70)
         print(f"BASE_DIR: {settings.BASE_DIR}")
         print(f"Models Directory: {models_dir}")
+        print(f"Models Directory Exists: {models_dir.exists()}")
         
         if models_dir.exists():
-            print(f"Files in models dir: {[f.name for f in models_dir.iterdir()]}")
+            print(f"\nFiles in models directory:")
+            for f in models_dir.iterdir():
+                size_mb = f.stat().st_size / (1024 * 1024) if f.is_file() else 0
+                print(f"  - {f.name}: {size_mb:.2f} MB")
         else:
-            print(f"❌ ERROR: Models directory DOES NOT EXIST at {models_dir}")
+            print(f"❌ ERROR: Models directory DOES NOT EXIST!")
             self._model = None
             return
 
-        # Strategy 1: Try tflite_runtime (Production/Render - most memory efficient)
+        # Strategy 1: Try tflite_runtime (Production/Render)
+        print("\n" + "=" * 70)
+        print("STRATEGY 1: TFLite via tflite_runtime")
+        print("=" * 70)
         try:
             import tflite_runtime.interpreter as tflite
-            print("✓ tflite_runtime successfully imported.")
+            print("✓ tflite_runtime successfully imported")
             
             if tflite_model_path.exists():
-                print(f"→ Attempting to load TFLite model from {tflite_model_path}")
+                file_size = tflite_model_path.stat().st_size / (1024*1024)
+                print(f"✓ TFLite file found: {tflite_model_path}")
+                print(f"✓ File size: {file_size:.2f} MB")
+                
                 try:
+                    print("\n→ Step 1: Creating Interpreter...")
                     interpreter = tflite.Interpreter(model_path=str(tflite_model_path))
+                    print("  ✓ Interpreter created successfully")
+                    
+                    print("\n→ Step 2: Allocating tensors...")
                     interpreter.allocate_tensors()
+                    print("  ✓ Tensors allocated successfully")
+                    
+                    print("\n→ Step 3: Getting input/output details...")
+                    input_details = interpreter.get_input_details()
+                    output_details = interpreter.get_output_details()
+                    print(f"  ✓ Input shape: {input_details[0]['shape']}")
+                    print(f"  ✓ Output shape: {output_details[0]['shape']}")
+                    
                     self._model = interpreter
+                    print("\n" + "=" * 70)
                     print("✅ SUCCESS: TFLite model loaded via tflite_runtime!")
+                    print("=" * 70)
                     return
+                    
                 except Exception as tflite_err:
-                    print(f"⚠️ TFLite allocation failed: {tflite_err}")
+                    print("\n" + "=" * 70)
+                    print("❌ CRITICAL ERROR: TFLite loading FAILED!")
+                    print("=" * 70)
+                    print(f"Error Type: {type(tflite_err).__name__}")
+                    print(f"Error Message: {str(tflite_err)}")
+                    print(f"\nFull Traceback:")
+                    print(traceback.format_exc())
+                    print("=" * 70)
             else:
                 print(f"⚠️ TFLite file NOT found at {tflite_model_path}")
-        except ImportError:
-            print("ℹ️ tflite_runtime not available (expected in local dev)")
+                
+        except ImportError as e:
+            print(f"ℹ️ tflite_runtime not available: {e}")
 
-        # Strategy 2: Try TensorFlow with TFLite (Fallback 1)
+        # Strategy 2: Try TensorFlow with TFLite (Fallback)
+        print("\n" + "=" * 70)
+        print("STRATEGY 2: TFLite via tensorflow")
+        print("=" * 70)
         try:
             import tensorflow as tf
-            print("✓ tensorflow successfully imported.")
+            print("✓ tensorflow successfully imported")
             
             if tflite_model_path.exists():
                 print(f"→ Attempting TFLite via tensorflow from {tflite_model_path}")
@@ -85,30 +124,28 @@ class ModelLoader:
                 except Exception as tf_tflite_err:
                     print(f"⚠️ TFLite via TensorFlow failed: {tf_tflite_err}")
             
-            # Strategy 3: Try H5 model (Fallback 2 - works locally, but memory intensive)
+            # Strategy 3: Try H5 model
             if h5_model_path.exists():
                 print(f"→ Attempting H5 model from {h5_model_path}")
                 try:
                     self._model = tf.keras.models.load_model(str(h5_model_path), compile=False)
-                    print("✅ SUCCESS: H5 model loaded via tensorflow!")
+                    print("✅ SUCCESS: H5 model loaded!")
                     return
                 except Exception as h5_err:
                     print(f"❌ H5 model loading failed: {h5_err}")
             else:
-                print(f"⚠️ H5 file NOT found at {h5_model_path}")
+                print(f"ℹ️ H5 file not found (expected after removal)")
                 
-        except ImportError:
-            print("❌ tensorflow not installed/found.")
+        except ImportError as e:
+            print(f"ℹ️ tensorflow not available: {e}")
         except Exception as tf_err:
             print(f"❌ TensorFlow error: {tf_err}")
-            import traceback
-            traceback.print_exc()
+            print(traceback.format_exc())
 
         # If we reach here, all strategies failed
-        print("❌ CRITICAL: Failed to load model with any strategy!")
-        print("   - TFLite via tflite_runtime: Failed or not available")
-        print("   - TFLite via tensorflow: Failed or not available")  
-        print("   - H5 via tensorflow: Failed or not available")
+        print("\n" + "=" * 70)
+        print("❌ CRITICAL: ALL MODEL LOADING STRATEGIES FAILED!")
+        print("=" * 70)
         self._model = None
     
     def load_class_labels(self):
@@ -132,32 +169,6 @@ class ModelLoader:
         except Exception as e:
             print(f"❌ ERROR loading class labels: {e}")
             self._class_labels = []
-    
-    def generate_demo_sports_labels(self):
-        """Generate sample sports labels for demo purposes."""
-        sports = [
-            'air hockey', 'ampute football', 'archery', 'arm wrestling', 'axe throwing',
-            'balance beam', 'barell racing', 'baseball', 'basketball', 'baton twirling',
-            'bike polo', 'billiards', 'bmx', 'bobsled', 'bowling',
-            'boxing', 'bull riding', 'bungee jumping', 'canoe slamon', 'cheerleading',
-            'chuckwagon racing', 'cricket', 'croquet', 'curling', 'disc golf',
-            'fencing', 'field hockey', 'figure skating men', 'figure skating pairs', 'figure skating women',
-            'fly fishing', 'football', 'formula 1 racing', 'frisbee', 'gaga',
-            'giant slalom', 'golf', 'hammer throw', 'hang gliding', 'harness racing',
-            'high jump', 'hockey', 'horse jumping', 'horse racing', 'horseshoe pitching',
-            'hurdles', 'hydroplane racing', 'ice climbing', 'ice yachting', 'jai alai',
-            'javelin', 'jousting', 'judo', 'lacrosse', 'log rolling',
-            'luge', 'motorcycle racing', 'mushing', 'nascar racing', 'olympic wrestling',
-            'parallel bar', 'pole climbing', 'pole dancing', 'pole vault', 'polo',
-            'pommel horse', 'rings', 'rock climbing', 'roller derby', 'rollerblade racing',
-            'rowing', 'rugby', 'sailboat racing', 'shot put', 'shuffleboard',
-            'sidecar racing', 'ski jumping', 'sky surfing', 'skydiving', 'snow boarding',
-            'snowmobile racing', 'speed skating', 'steer wrestling', 'sumo wrestling', 'surfing',
-            'swimming', 'table tennis', 'tennis', 'track bicycle', 'trapeze',
-            'tug of war', 'ultimate', 'uneven bars', 'volleyball', 'water cycling',
-            'water polo', 'weightlifting', 'wheelchair basketball', 'wheelchair racing', 'wingsuit flying'
-        ]
-        return sports[:100]  # Ensure we have exactly 100 labels
     
     def get_model(self):
         """Get the loaded model, loading it if necessary."""
