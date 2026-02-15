@@ -42,6 +42,7 @@ CSRF_TRUSTED_ORIGINS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'whitenoise.runserver_nostatic',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -140,6 +141,8 @@ STATICFILES_DIRS = [
 if not DEBUG:
     # Use CompressedStaticFilesStorage instead of Manifest version to be more lenient
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+    # Force Whitenoise to use the finders as a fallback
+    WHITENOISE_USE_FINDERS = True
 
 # Media files (uploaded images)
 MEDIA_URL = '/media/'

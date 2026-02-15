@@ -20,8 +20,11 @@ mkdir -p staticfiles
 # Convert static files
 python manage.py collectstatic --no-input
 
-# List collected files to verify
-ls -R staticfiles
+# Debug: List static directories to verify file locations
+echo "--- Checking Static Source ---"
+ls -la classifier/static/classifier || echo "Source not found"
+echo "--- Checking Collected Assets ---"
+ls -R staticfiles || echo "staticfiles not found"
 
 # Apply migrations
 python manage.py migrate
