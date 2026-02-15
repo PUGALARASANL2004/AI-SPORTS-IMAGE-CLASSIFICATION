@@ -8,7 +8,7 @@ whitenoise
 
 # AI & Image Processing (Lightweight for Render Free Tier)
 tflite-runtime==2.14.0
-numpy>=1.23.0,<1.27.0
+numpy==1.23.5
 pillow>=10.0.0
 opencv-python-headless>=4.8.0
 matplotlib>=3.7.0
