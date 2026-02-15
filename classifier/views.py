@@ -36,8 +36,6 @@ def upload_image(request):
                 
                 uploaded_image.save()
                 
-                uploaded_image.save()
-                
                 # Redirect to result page
                 return redirect('result', pk=uploaded_image.pk)
             
